@@ -1,0 +1,493 @@
+Mohammed Suleiman 
+August 9, 2026
+
+Milestone 3:
+Struct Course
+String courseNumber
+String name
+Vector prerequisites
+End Struct
+
+Struct Node
+Course course
+Node left
+Node right
+End Struct
+
+Node root = NULL
+
+Function InsertNode(Node current, Course newCourse)
+If current is NULL then
+Node newNode
+newNode.course = newCourse
+newNode.left = NULL
+newNode.right = NULL
+Return newNode
+End If
+
+If newCourse.courseNumber < current.course.courseNumber then
+current.left = InsertNode(current.left, newCourse)
+Else If newCourse.courseNumber > current.course.courseNumber then
+current.right = InsertNode(current.right, newCourse)
+End If
+Return current
+End Function
+
+Function SearchNode(Node current, String searchCourseNumber)
+If current is NULL then
+Return NULL
+End If
+
+If current.course.courseNumber == searchCourseNumber then
+Return current.course
+End If
+
+If searchCourseNumber < current.course.courseNumber then
+Return SearchNode(current.left, searchCourseNumber)
+Else
+Return SearchNode(current.right, searchCourseNumber)
+End If
+End Function
+
+Function ValidatePrerequisites(Node node)
+If node is not NULL then
+ValidatePrerequisites(node.left)
+
+For each prereq in node.course.prerequisites
+If SearchNode(root, prereq) is NULL then
+Print "Warning: Prerequisite " + prereq + " for course " + node.course.courseNumber + " does not exist."
+End If
+End For
+
+ValidatePrerequisites(node.right)
+End If
+End Function
+
+Function LoadCourses(String filePath)
+File courseFile = OpenFile(filePath)
+
+If courseFile is NULL then
+Print "Error: could not open file."
+Return
+End If
+
+While NOT EndOfFile(courseFile)
+String line = ReadLine(courseFile)
+Vector tokens = Split(line, ',')
+
+If tokens.length < 2 then
+Print "Error: line missing course number/name"
+Continue
+End If
+
+Course newCourse
+newCourse.courseNumber = Trim(tokens[0])
+newCourse.name = Trim(tokens[1])
+
+If newCourse.courseNumber == "" OR newCourse.name == "" then
+	Print "error: blank course number or name found"
+	Continue
+End If
+
+If SearchNode(root, newCourse.courseNumber) is not NULL then
+Print "error: duplicate course " + newCourse.courseNumber + " found"
+Continue
+End If
+
+If tokens.length > 2 then
+For index from 2 to tokens.length - 1
+newCourse.prerequisites.append(Trim(tokens[index]))
+End For
+End If
+
+root = InsertNode(root, newCourse)
+End While
+
+CloseFile(courseFile)
+ValidatePrerequisites(root)
+Print "Course data loaded successfully."
+End Function
+
+Function PrintCourseInformation(String searchCourseNumber)
+Course foundCourse = SearchNode(root, searchCourseNumber)
+
+If foundCourse is not NULL then
+Print foundCourse.courseNumber + ", " + foundCourse.name
+Print "Prerequisites: "
+
+If foundCourse.prerequisites.length == 0 then
+Print "None"
+Else
+String prereqString = ""
+
+For index from 0 to foundCourse.prerequisites.length - 1
+String prereqID = foundCourse.prerequisites[index]
+Course prereqCourse = SearchNode(root, prereqID)
+
+If prereqCourse is not NULL then
+	prereqString = prereqString + prereqID + ": " + prereqCourse.name
+	Else
+		prereqString = prereqString + prereqID + ": Unknown"
+	End If
+
+If index < foundCourse.prerequisites.length - 1 then
+prereqString = prereqString + ", "
+End If
+End For
+
+Print prereqString
+End If
+
+Else
+Print "Error: course " + searchCourseNumber + " not found."
+End If
+End Function
+
+Function PrintInOrder(Node node)
+If node is not NULL then
+PrintInOrder(node.left)
+Print node.course.courseNumber + ", " + node.course.name
+PrintInOrder(node.right)
+End If
+End Function
+Function PrintAllCourses()
+Print "Course List:"
+
+If root is NULL then
+Print "Error: No courses loaded."
+Else
+PrintInOrder(root)
+End If
+End Function
+
+Function Main()
+LoadCourses("CS300_Course_Information.csv")
+PrintCourseInformation("CSCI300")
+PrintCourseInformation("CSCI400")
+PrintAllCourses()
+End Function
+
+Milestone 2:
+Struct Course
+String courseNumber
+String name
+Vector prerequisites
+End Struct
+
+HashTable courseTable
+
+Function LoadCourses(String filePath)
+File courseFile = OpenFile(filePath)
+
+If courseFile is NULL then
+Print "error: could not open file"
+Return
+End If
+
+While NOT EndOfFile(courseFile)
+String line = ReadLine(courseFile)
+Vector tokens = Split(line, ',')
+
+If tokens.length < 2 then
+Print "error: line missing course number/name"
+Continue
+End If
+
+Course newCourse
+newCourse.courseNumber = Trim(tokens[0])
+newCourse.name = Trim(tokens[1])
+
+If newCourse.courseNumber == "" OR newCourse.name == "" then
+Print "error: blank course number or name found"
+Continue
+End If
+
+If courseTable.ContainsKey(newCourse.courseNumber) then
+Print "error: duplicate course " + newCourse.courseNumber + " found"
+Continue
+End If
+
+If tokens.length > 2 then
+For index from 2 to tokens.length - 1
+newCourse.prerequisites.append(Trim(tokens[index]))
+End For
+End If
+
+courseTable.Insert(newCourse.courseNumber, newCourse)
+End While
+
+CloseFile(courseFile)
+
+For each key in courseTable.Keys
+Course course = courseTable.Get(key)
+
+For each prereq in course.prerequisites
+If NOT courseTable.ContainsKey(prereq) then
+Print "prereq for course " + course.courseNumber + " doesnt exist"
+End If
+End For
+End For
+Print "Course data loaded"
+End Function
+
+Function PrintCourseInformation(String searchCourseNumber)
+If courseTable.ContainsKey(searchCourseNumber) then
+Course course = courseTable.Get(searchCourseNumber)
+Print course.courseNumber + ", " + course.name
+Print "Prerequisites: "
+If course.prerequisites.length == 0 then
+Print "none"
+Else
+String prereqString = ""
+For index from 0 to course.prerequisites.length - 1
+String prereqID = course.prerequisites[index]
+Course prereqCourse = courseTable.Get(prereqID)
+prereqString = prereqString + prereqCourse.courseNumber + ": " + prereqCourse.name
+If index < course.prerequisites.length - 1 then
+prereqString = prereqString + ", "
+End If
+End For
+Print prereqString
+End If
+Else
+Print "error: course " + searchCourseNumber + " not found"
+End If
+End Function
+
+Function PrintAllCourses()
+Vector keyList
+
+For each key in courseTable.Keys
+keyList.append(key)
+End For
+
+Integer n = keyList.length
+
+For i from 0 to n - 1
+For j from 0 to n - i - 2
+If keyList[j] > keyList[j + 1] Then
+String tempKey = keyList[j]
+keyList[j] = keyList[j + 1]
+keyList[j + 1] = tempKey
+End If
+End For
+End For
+
+Print "Course List:"
+
+For each sortedKey in keyList
+Course course = courseTable.Get(sortedKey)
+Print course.courseNumber + ", " + course.name
+End For
+End Function
+
+Function Main()
+LoadCourses("CS300_Course_Information.csv")
+PrintCourseInformation("CSCI300")
+PrintCourseInformation("CSCI400")
+PrintAllCourses()
+End Function
+
+Milestone 1:
+Struct Course
+String courseNumber
+String name
+Vector prerequisites
+End Struct
+
+Vector courseList
+
+Function LoadCourses(String filePath)
+File courseFile = OpenFile(filePath)
+
+If courseFile is NULL then
+Print "error: could not open file."
+Return
+End If
+
+While NOT EndOfFile(courseFile)
+String line = ReadLine(courseFile)
+Vector tokens = Split(line, ',')
+
+If tokens.length < 2 then
+Print "error: line missing course number/name"
+Continue
+End If
+
+Course newCourse
+newCourse.courseNumber = Trim(tokens[0])
+newCourse.name = Trim(tokens[1])
+
+If newCourse.courseNumber == "" OR newCourse.name == "" then
+Print "error: blank course number or name found"
+Continue
+End If
+
+Boolean isDuplicate = False
+
+For each existingCourse in courseList
+	If existingCourse.courseNumber == newCourse.courseNumber then
+		isDuplicate = True
+		Break
+	End If
+End For
+
+If isDuplicate == True then
+	Print "error: duplicate course " + newCourse.courseNumber + " found"
+	Continue
+End If
+
+If tokens.Length > 2 then
+For index from 2 to tokens.length - 1
+newCourse.prerequisites.append(Trim(tokens[index]))
+End For
+End If
+
+courseList.append(newCourse)
+End while
+
+CloseFile(courseFile)
+
+For each course in courseList
+For each prereq in course.prerequisites
+Boolean prereqFound = false
+
+For each validationCourse in courseList
+If validationCourse.courseNumber == prereq then
+prereqFound = true
+Break
+End If
+End For
+
+If prereqFound == false then
+Print "prereq for course " + course.courseNumber + " doesnt exist"
+End If
+End For
+End For
+
+Print "Course data loaded"
+End Function
+
+Function PrintCourseInformation(String searchCourseNumber)
+Boolean courseFound = False
+
+For each course in courseList
+If ToUpper(course.courseNumber) == ToUpper(searchCourseNumber) then
+courseFound = true
+Print course.courseNumber + ', ' + course.name
+Print "Prerequisites: "
+
+If course.prerequisites.length == 0 then
+Print "none"
+Else
+String prereqString = ""
+
+For index from 0 to course.prerequisites.length - 1
+	String prereqID = course.prerequisites[index]
+String prereqName = "Unknown"
+
+For each searchPrereq in courseList
+	If searchPrereq.courseNumber == prereqID then
+		prereqName = searchPrereq.name
+		Break
+		End If
+	End For
+
+prereqString = prereqString + prereqID + ": " + prereqName
+
+If index < course.prerequisites.length - 1 then
+prereqString = prereqString + ", "
+End If
+End For
+
+Print prereqString
+End If
+Break
+End If
+End For
+If courseFound == false then
+Print "error: course " + searchCourseNumber + " not found"
+End If
+End Function
+
+Function PrintAllCourses()
+Integer n = courseList.length
+
+For i from 0 to n - 1
+For j from 0 to n - i - 2
+If courseList[j].courseNumber > courseList[j + 1].courseNumber Then
+Course tempCourse = courseList[j]
+courseList[j] = courseList[j + 1]
+courseList[j + 1] = tempCourse
+End If
+End For
+End For
+
+Print "Course List:"
+
+For each course in courseList
+Print course.courseNumber + ", " + course.name
+End For
+End Function
+
+Function Main()
+LoadCourses("CS300_Course_Information.csv")
+PrintCourseInformation("CSCI300")
+PrintCourseInformation("CSCI400")
+PrintAllCourses()
+End Function
+
+
+Menu Function:
+Function Menu()
+Integer userChoice = 0
+Boolean dataLoaded = False
+
+Print "Welcome to the course planner."
+
+While userChoice != 9
+Print " "
+Print "  1. Load Data Structure."
+Print "  2. Print Course List."
+Print "  3. Print Course."
+Print "  9. Exit"
+Print "Please select an option."
+Input userChoice
+
+If userChoice == 1 Then
+LoadCourses("CS300_Course_Information.csv")
+dataLoaded = True
+Else If userChoice == 2 Then
+If dataLoaded == False Then
+Print "Error: You must load the file data first."
+Else
+PrintAllCourses()
+End If
+
+Else If userChoice == 3 Then
+If dataLoaded == False Then
+Print "Error: You must load the file data first."
+Else
+Print "Which course to print? "
+String searchCourse
+Input searchCourse
+
+PrintCourseInformation(searchCourse)
+End If
+
+Else If userChoice == 9 Then
+Print "Goodbye."
+Else
+Print "Error: Invalid option. Please enter 1, 2, 3, or 9."
+End If
+End While
+End Function
+
+Charts:
+
+
+
+	Advantages and Disadvantages:
+ABCU’s Computer Science department would do well with the Hash Table as their solution. Since the primary usage of this software is to allow computer science advisors to access course information and verify prerequisites for students on demand, the search speed is a critical factor, one that I believe the Hash Table will satisfy by using O(n) lookup times. The Vector and Binary Search Tree data structures both only provide O(n^2) lookup times. 
+While vectors allocate memory in a single block which makes them memory efficient and fast enough to iterate through sequentially, searching for a specific course is very slow on O(n^2) time. This is because you must loop through the elements one by one until you find a match. Furthermore, vectors do not inherently sort data, meaning an entirely separate sorting algorithm is required to print the catalog in alphanumeric order.
+Binary search trees natively organize data as it is inserted which would satisfy the advisor requirement to print an alphanumeric, as In-Order traversal will display the sorted catalog without needing a secondary sorting algorithm. Yet, a standard binary search tree can become unbalanced depending on the order of the input data. If the course file happens to be presorted, the tree loses its efficiency. They also require more memory management because of having to handle left and right node pointers. While the hash table does require extra processing overhead to extract and sort the keys for printing the sorted catalog, this is fine as it is likely not something that will be required compared to the constant looking up of individual student courses.
